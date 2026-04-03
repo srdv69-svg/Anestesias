@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Anestesias Particulares</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #f4f3ef; --surface: #ffffff; --surface2: #eeecea;
+  --border: #dddbd5; --text: #181714; --text2: #65635d; --text3: #9c9a94;
+  --accent: #181714; --green: #1e6641; --green-bg: #d1f0de;
+  --blue: #1740a0; --blue-bg: #dce6fb; --red: #a01717; --red-bg: #fbd9d9;
+  --r: 10px; --rs: 6px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; }
+
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 54px; position: sticky; top: 0; z-index: 100; }
+.brand { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
+.brand span { color: var(--text3); font-weight: 400; }
+.sync-info { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); display: inline-block; transition: background 0.3s; }
+.dot.on { background: var(--green); }
+
+.layout { display: grid; grid-template-columns: 215px 1fr; min-height: calc(100vh - 54px); }
+
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.25rem 0.75rem; display: flex; flex-direction: column; gap: 2px; }
+.s-label { font-size: 11px; color: var(--text3); font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; padding: 0 10px; margin: 16px 0 5px; }
+.s-label:first-child { margin-top: 0; }
+.nav-btn { width: 100%; text-align: left; padding: 8px 10px; border-radius: var(--rs); border: none; background: none; cursor: pointer; font-size: 14px; color: var(--text2); font-family: 'DM Sans', sans-serif; transition: background 0.12s, color 0.12s; }
+.nav-btn:hover { background: var(--surface2); color: var(--text); }
+.nav-btn.active { background: var(--accent); color: #fff; font-weight: 500; }
+.partner-btn { width: 100%; text-align: left; padding: 6px 10px; border-radius: var(--rs); border: none; background: none; cursor: pointer; font-size: 13px; color: var(--text2); font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 8px; transition: background 0.12s; }
+.partner-btn:hover { background: var(--surface2); }
+.partner-btn.sel { background: var(--surface2); color: var(--text); font-weight: 500; }
+.chk { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; transition: background 0.12s, border-color 0.12s; }
+.partner-btn.sel .chk { background: var(--accent); border-color: var(--accent); }
+
+.main { padding: 1.75rem 2rem; overflow-y: auto; }
+.page { display: none; }
+.page.active { display: block; }
+.pg-title { font-size: 21px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 3px; }
+.pg-sub { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 1.4rem; margin-bottom: 1rem; }
+.card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); margin-bottom: 1rem; }
+
+.fg { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+.f { display: flex; flex-direction: column; gap: 5px; }
+.f.full { grid-column: 1 / -1; }
+.f label { font-size: 12px; font-weight: 500; color: var(--text2); }
+input[type=text], input[type=date], input[type=number], select { width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: var(--rs); font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); transition: border-color 0.12s; -webkit-appearance: none; appearance: none; }
+input[type=text]:focus, input[type=date]:focus, input[type=number]:focus, select:focus { outline: none; border-color: var(--accent); }
+input[readonly] { background: var(--surface2); color: var(--text2); cursor: default; }
+
+.price-box { background: var(--surface2); border-radius: var(--rs); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
+.price-box .lbl { font-size: 12px; color: var(--text2); }
+.price-box .val { font-size: 22px; font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: -0.02em; }
+
+/* Campo precio manual */
+.precio-manual { display: none; }
+.precio-manual.visible { display: flex; flex-direction: column; gap: 5px; }
+.precio-manual label { font-size: 12px; font-weight: 500; color: var(--text2); }
+.precio-manual input { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; }
+
+.btn-main { width: 100%; padding: 10px 0; border-radius: var(--rs); border: none; cursor: pointer; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; background: var(--accent); color: #fff; margin-top: 14px; transition: opacity 0.12s; }
+.btn-main:hover { opacity: 0.85; }
+.btn-main:disabled { opacity: 0.4; cursor: not-allowed; }
+.save-ok { text-align: center; font-size: 13px; color: var(--green); margin-top: 9px; min-height: 18px; }
+
+.metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 1.5rem; }
+.metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 1.2rem; }
+.metric .ml { font-size: 11px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.metric .mv { font-size: 24px; font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: -0.03em; }
+.mv.g { color: var(--green); }
+.mv.b { color: var(--blue); }
+
+.filter-bar { display: flex; gap: 6px; margin-bottom: 1rem; }
+.fbtn { padding: 5px 13px; border-radius: 20px; border: 1px solid var(--border); background: none; cursor: pointer; font-size: 13px; color: var(--text2); font-family: 'DM Sans', sans-serif; transition: all 0.12s; }
+.fbtn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.li { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--border); }
+.li:last-child { border-bottom: none; }
+.li-name { font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.li-meta { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.75; }
+.li-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.li-amt { font-size: 15px; font-weight: 600; font-family: 'DM Mono', monospace; white-space: nowrap; }
+.li-actions { display: flex; gap: 5px; align-items: center; }
+.badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+.b-r { background: var(--green-bg); color: var(--green); }
+.b-c { background: var(--blue-bg); color: var(--blue); }
+.btn-cobrar { font-size: 11px; padding: 3px 10px; border-radius: 20px; cursor: pointer; border: 1px solid var(--blue); background: var(--blue-bg); color: var(--blue); font-weight: 500; font-family: 'DM Sans', sans-serif; transition: opacity 0.12s; white-space: nowrap; }
+.btn-cobrar:hover { opacity: 0.7; }
+.btn-del { font-size: 11px; padding: 3px 8px; border-radius: 20px; cursor: pointer; border: 1px solid var(--border); background: none; color: var(--red); font-family: 'DM Sans', sans-serif; transition: all 0.12s; white-space: nowrap; }
+.btn-del:hover { background: var(--red-bg); border-color: var(--red); }
+.empty { text-align: center; padding: 2.5rem 1rem; color: var(--text3); font-size: 14px; }
+
+.inf-hdr { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 2px; }
+.inf-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.inf-row:last-child { border-bottom: none; }
+.inf-row .nm { font-weight: 500; }
+.inf-row .amts { color: var(--text2); font-family: 'DM Mono', monospace; font-size: 13px; }
+.inf-row .amts strong { color: var(--text); }
+.inf-total { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; margin-top: 6px; font-weight: 600; font-size: 15px; border-top: 2px solid var(--border); }
+.inf-total .tv { font-family: 'DM Mono', monospace; }
+
+@media (max-width: 680px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+  .metrics { grid-template-columns: 1fr 1fr; }
+  .fg { grid-template-columns: 1fr; }
+  .f.full { grid-column: 1; }
+  .main { padding: 1.25rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">Anestesias <span>/ Grupo 11</span></div>
+  <div class="sync-info">
+    <span class="dot" id="syncDot"></span>
+    <span id="syncLabel">Conectando...</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="s-label">Navegación</div>
+    <button class="nav-btn active" onclick="goPage('nueva')">Nueva práctica</button>
+    <button class="nav-btn" onclick="goPage('listado')">Listado</button>
+    <button class="nav-btn" onclick="goPage('informe')">Informe</button>
+    <div class="s-label">Yo soy...</div>
+    <div id="partnerList"></div>
+  </aside>
+
+  <main class="main">
+
+    <!-- NUEVA -->
+    <div class="page active" id="page-nueva">
+      <div class="pg-title">Nueva práctica</div>
+      <div class="pg-sub">Completá los datos. El valor se asigna automáticamente según la práctica.</div>
+      <div class="card">
+        <div class="card-title">Datos de la cirugía</div>
+        <div class="fg">
+          <div class="f">
+            <label>Paciente</label>
+            <input type="text" id="inp-paciente" placeholder="Nombre del paciente" />
+          </div>
+          <div class="f">
+            <label>Cirujano</label>
+            <input type="text" id="inp-cirujano" placeholder="Nombre del cirujano" />
+          </div>
+          <div class="f">
+            <label>Fecha</label>
+            <input type="date" id="inp-fecha" />
+          </div>
+          <div class="f">
+            <label>Anestesiólogo</label>
+            <input type="text" id="inp-anest" readonly placeholder="Seleccioná tu nombre ←" />
+          </div>
+          <div class="f full">
+            <label>Práctica</label>
+            <select id="inp-practica" onchange="actualizarPrecio()">
+              <option value="">— Seleccionar práctica —</option>
+            </select>
+          </div>
+
+          <!-- Campo precio manual (solo visible cuando se elige "Otros") -->
+          <div class="f full precio-manual" id="precio-manual-wrap">
+            <label>Valor manual ($ ARS)</label>
+            <input type="number" id="inp-precio-manual" placeholder="Ej: 750000" min="0" oninput="actualizarPrecioManual()" />
+          </div>
+
+          <div class="f full">
+            <div class="price-box">
+              <span class="lbl">Valor · contado 10%</span>
+              <span class="val" id="price-disp">—</span>
+            </div>
+          </div>
+        </div>
+        <button class="btn-main" id="btnGuardar" onclick="guardar()">Guardar práctica</button>
+        <div class="save-ok" id="saveOk"></div>
+      </div>
+    </div>
+
+    <!-- LISTADO -->
+    <div class="page" id="page-listado">
+      <div class="pg-title">Listado de prácticas</div>
+      <div class="pg-sub">Todas las prácticas del grupo en tiempo real.</div>
+      <div class="filter-bar">
+        <button class="fbtn active" onclick="setFiltro('todas', this)">Todas</button>
+        <button class="fbtn" onclick="setFiltro('realizada', this)">Realizadas</button>
+        <button class="fbtn" onclick="setFiltro('cobrada', this)">Cobradas</button>
+      </div>
+      <div class="card" style="padding: 0.25rem 1.4rem;">
+        <div id="listado-body"><div class="empty">Conectando con la base de datos...</div></div>
+      </div>
+    </div>
+
+    <!-- INFORME -->
+    <div class="page" id="page-informe">
+      <div class="pg-title">Informe general</div>
+      <div class="pg-sub">Totales en tiempo real y distribución entre los 11 socios.</div>
+      <div class="metrics">
+        <div class="metric"><div class="ml">Total realizadas</div><div class="mv g" id="m-real">$ 0</div></div>
+        <div class="metric"><div class="ml">Total cobradas</div><div class="mv b" id="m-cob">$ 0</div></div>
+        <div class="metric"><div class="ml">Saldo pendiente</div><div class="mv" id="m-saldo">$ 0</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Distribución por socio</div>
+        <div id="informe-body"><div class="empty">Sin datos.</div></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script type="module">
+import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, push, onValue, update, remove }
+                           from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyA8lmdqv3jtS9gAa-GNBqNz4Vz_uNSwIuU",
+  authDomain:        "particulares-4b54d.firebaseapp.com",
+  databaseURL:       "https://particulares-4b54d-default-rtdb.firebaseio.com",
+  projectId:         "particulares-4b54d",
+  storageBucket:     "particulares-4b54d.firebasestorage.app",
+  messagingSenderId: "431533270431",
+  appId:             "1:431533270431:web:b7fd62940bf79e8bc709aa"
+};
+
+const SOCIOS = [
+  'Socio 1','Socio 2','Socio 3','Socio 4','Socio 5','Socio 6',
+  'Socio 7','Socio 8','Socio 9','Socio 10','Socio 11'
+];
+
+const PRACTICAS = [
+  {nombre:'Bichectomia',precio:595800},
+  {nombre:'Lipo papada',precio:441000},
+  {nombre:'Bichectomia + Lipo papada',precio:816300},
+  {nombre:'Lipo de rostro',precio:441000},
+  {nombre:'Lifting Completo con blefaro',precio:1462500},
+  {nombre:'Lifting Completo sin blefaro',precio:820800},
+  {nombre:'Mini lifting sin blefaro',precio:595800},
+  {nombre:'Mini lifting con blefaro sup e inferior',precio:1042200},
+  {nombre:'Blefaro una zona (sup o inferior)',precio:441000},
+  {nombre:'Blefaro dos zonas (sup e inferior)',precio:595800},
+  {nombre:'Rinoplastia',precio:820800},
+  {nombre:'Otoplastia bilateral',precio:820800},
+  {nombre:'Otoplastia unilateral',precio:595800},
+  {nombre:'Lifting Cuello',precio:820800},
+  {nombre:'Ginecomastia bilateral',precio:820800},
+  {nombre:'Ginecoastia unilateral',precio:595800},
+  {nombre:'Pexia mamaria',precio:820800},
+  {nombre:'Implantes mamrios',precio:820800},
+  {nombre:'Reduccion mamaria',precio:1462500},
+  {nombre:'Implantes mamario unilateral',precio:595800},
+  {nombre:'Implantes mas mastopexia',precio:1462500},
+  {nombre:'Rejuvenecimiento vaginal',precio:441000},
+  {nombre:'Lipectomia',precio:595800},
+  {nombre:'Dermolipectomia',precio:1142100},
+  {nombre:'Dermolipectomia + lipotransferencia',precio:1462500},
+  {nombre:'Lipo abdomen y flancos + lipotransferencia',precio:1042200},
+  {nombre:'Lipofiling mamas',precio:595800},
+  {nombre:'Lipo de 1 zona + lipotransferencia glutea',precio:820800},
+  {nombre:'Dermo de piernas',precio:820800},
+  {nombre:'Dermo de brazos',precio:820800},
+  {nombre:'Lipo abdomen y flancos',precio:595800},
+  {nombre:'Otros',precio:null}
+];
+
+let socioActual = localStorage.getItem('socioActual') || null;
+let filtroActual = 'todas';
+let practicas = [];
+let fnPush, fnCobrar, fnDel;
+
+const fmt = n => '$ ' + Math.round(n).toLocaleString('es-AR');
+
+// ─── FIREBASE ────────────────────────────────────────────────────────────────
+const app   = initializeApp(firebaseConfig);
+const db    = getDatabase(app);
+const dbRef = ref(db, 'practicas');
+
+fnPush   = (e)   => push(dbRef, e);
+fnCobrar = (key) => update(ref(db, 'practicas/' + key), { estado: 'cobrada' });
+fnDel    = (key) => remove(ref(db, 'practicas/' + key));
+
+onValue(dbRef, (snapshot) => {
+  const data = snapshot.val();
+  practicas = data
+    ? Object.entries(data).map(([key, val]) => ({ ...val, _key: key }))
+    : [];
+  renderListado();
+  renderInforme();
+  document.getElementById('syncDot').classList.add('on');
+  document.getElementById('syncLabel').textContent = 'Conectado · tiempo real';
+}, () => {
+  document.getElementById('syncLabel').textContent = 'Error de conexión';
+});
+
+// ─── NAVEGACIÓN ──────────────────────────────────────────────────────────────
+window.goPage = (id) => {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach((b, i) =>
+    b.classList.toggle('active', ['nueva','listado','informe'][i] === id));
+};
+
+// ─── SOCIOS ──────────────────────────────────────────────────────────────────
+const c = document.getElementById('partnerList');
+SOCIOS.forEach(s => {
+  const b = document.createElement('button');
+  b.className = 'partner-btn' + (s === socioActual ? ' sel' : '');
+  b.innerHTML = `<span class="chk"></span>${s}`;
+  b.onclick = () => {
+    document.querySelectorAll('.partner-btn').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel');
+    socioActual = s;
+    localStorage.setItem('socioActual', s);
+    document.getElementById('inp-anest').value = s;
+  };
+  c.appendChild(b);
+});
+if (socioActual) document.getElementById('inp-anest').value = socioActual;
+
+// ─── PRÁCTICAS SELECT ────────────────────────────────────────────────────────
+const sel = document.getElementById('inp-practica');
+PRACTICAS.forEach(p => {
+  const opt = document.createElement('option');
+  opt.value = p.nombre;
+  opt.textContent = p.nombre;
+  sel.appendChild(opt);
+});
+
+window.actualizarPrecio = () => {
+  const val   = document.getElementById('inp-practica').value;
+  const found = PRACTICAS.find(p => p.nombre === val);
+  const manualWrap = document.getElementById('precio-manual-wrap');
+  const manualInp  = document.getElementById('inp-precio-manual');
+
+  if (val === 'Otros') {
+    manualWrap.classList.add('visible');
+    manualInp.value = '';
+    document.getElementById('price-disp').textContent = '—';
+    manualInp.focus();
+  } else {
+    manualWrap.classList.remove('visible');
+    manualInp.value = '';
+    document.getElementById('price-disp').textContent = found && found.precio ? fmt(found.precio) : '—';
+  }
+};
+
+window.actualizarPrecioManual = () => {
+  const val = parseFloat(document.getElementById('inp-precio-manual').value);
+  document.getElementById('price-disp').textContent = val > 0 ? fmt(val) : '—';
+};
+
+// ─── GUARDAR ─────────────────────────────────────────────────────────────────
+window.guardar = async () => {
+  const paciente = document.getElementById('inp-paciente').value.trim();
+  const cirujano = document.getElementById('inp-cirujano').value.trim();
+  const fecha    = document.getElementById('inp-fecha').value;
+  const practica = document.getElementById('inp-practica').value;
+
+  if (!socioActual) { alert('Primero seleccioná tu nombre en el panel izquierdo.'); return; }
+  if (!paciente)    { alert('Ingresá el nombre del paciente.'); return; }
+  if (!cirujano)    { alert('Ingresá el nombre del cirujano.'); return; }
+  if (!fecha)       { alert('Seleccioná la fecha.'); return; }
+  if (!practica)    { alert('Seleccioná una práctica.'); return; }
+
+  let precio;
+  if (practica === 'Otros') {
+    precio = parseFloat(document.getElementById('inp-precio-manual').value);
+    if (!precio || precio <= 0) { alert('Ingresá un valor válido para la práctica.'); return; }
+  } else {
+    precio = PRACTICAS.find(p => p.nombre === practica).precio;
+  }
+
+  const entry = {
+    anestesiologo: socioActual, paciente, cirujano, fecha,
+    practica, precio, estado: 'realizada', ts: Date.now()
+  };
+
+  const btn = document.getElementById('btnGuardar');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try {
+    await fnPush(entry);
+    document.getElementById('inp-paciente').value = '';
+    document.getElementById('inp-cirujano').value = '';
+    document.getElementById('inp-practica').value = '';
+    document.getElementById('inp-precio-manual').value = '';
+    document.getElementById('precio-manual-wrap').classList.remove('visible');
+    document.getElementById('price-disp').textContent = '—';
+    const ok = document.getElementById('saveOk');
+    ok.textContent = '✓ Práctica guardada correctamente';
+    setTimeout(() => ok.textContent = '', 3000);
+  } catch(e) {
+    alert('Error al guardar: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Guardar práctica';
+};
+
+// ─── LISTADO ─────────────────────────────────────────────────────────────────
+window.setFiltro = (f, btn) => {
+  filtroActual = f;
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderListado();
+};
+
+window.marcarCobrada = async (key) => { await fnCobrar(key); };
+
+window.eliminar = async (key) => {
+  if (!confirm('¿Eliminar esta práctica?')) return;
+  await fnDel(key);
+};
+
+function renderListado() {
+  const c = document.getElementById('listado-body');
+  if (!c) return;
+  let data = [...practicas].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  if (filtroActual !== 'todas') data = data.filter(p => p.estado === filtroActual);
+  if (!data.length) { c.innerHTML = '<div class="empty">No hay prácticas para mostrar.</div>'; return; }
+  c.innerHTML = data.map(p => `
+    <div class="li">
+      <div>
+        <div class="li-name">
+          ${p.paciente}
+          <span class="badge ${p.estado === 'realizada' ? 'b-r' : 'b-c'}">${p.estado === 'realizada' ? 'Realizada' : 'Cobrada'}</span>
+        </div>
+        <div class="li-meta">
+          ${p.practica}<br>
+          Cirujano: ${p.cirujano} &middot; ${p.fecha} &middot; ${p.anestesiologo}
+        </div>
+      </div>
+      <div class="li-right">
+        <div class="li-amt">${fmt(p.precio)}</div>
+        <div class="li-actions">
+          ${p.estado === 'realizada'
+            ? `<button class="btn-cobrar" onclick="marcarCobrada('${p._key}')">Marcar cobrada</button>`
+            : ''}
+          <button class="btn-del" onclick="eliminar('${p._key}')">Eliminar</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ─── INFORME ─────────────────────────────────────────────────────────────────
+function renderInforme() {
+  const realizadas = practicas.filter(p => p.estado === 'realizada').reduce((s, p) => s + p.precio, 0);
+  const cobradas   = practicas.filter(p => p.estado === 'cobrada').reduce((s, p) => s + p.precio, 0);
+  const saldo      = realizadas - cobradas;
+
+  document.getElementById('m-real').textContent  = fmt(realizadas);
+  document.getElementById('m-cob').textContent   = fmt(cobradas);
+  document.getElementById('m-saldo').textContent = fmt(saldo);
+
+  const c = document.getElementById('informe-body');
+  if (!c) return;
+  if (!realizadas && !cobradas) { c.innerHTML = '<div class="empty">Sin datos para mostrar.</div>'; return; }
+
+  const porSocio = {};
+  SOCIOS.forEach(s => porSocio[s] = 0);
+  practicas.forEach(p => {
+    if (porSocio[p.anestesiologo] !== undefined) porSocio[p.anestesiologo] += p.precio;
+  });
+
+  const parte = realizadas / 11;
+
+  c.innerHTML = `
+    <div class="inf-hdr"><span>Socio</span><span>Ingresado — Parte (÷ 11)</span></div>
+    ${SOCIOS.map(s => `
+      <div class="inf-row">
+        <span class="nm">${s}</span>
+        <span class="amts">${fmt(porSocio[s] || 0)} — <strong>${fmt(parte)}</strong></span>
+      </div>`).join('')}
+    <div class="inf-total">
+      <span>Total realizadas</span>
+      <span class="tv">${fmt(realizadas)}</span>
+    </div>`;
+}
+
+document.getElementById('inp-fecha').value = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
